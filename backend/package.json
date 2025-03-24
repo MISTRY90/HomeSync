@@ -20,11 +20,13 @@
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "mqtt": "^5.10.4",
     "mysql2": "^3.13.0",
     "qrcode": "^1.5.4",
     "socket.io": "^4.8.1",
     "speakeasy": "^2.0.0",
-    "winston": "^3.17.0"
+    "winston": "^3.17.0",
+    "ws": "^8.18.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

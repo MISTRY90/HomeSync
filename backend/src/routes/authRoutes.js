@@ -1,16 +1,12 @@
 import express from 'express';
-import AuthController from '../controllers/authController.js';
-import authMiddleware from '../middleware/authMiddleware.js';
+import { registerUser, loginUser, verifyMFA, refreshToken } from '../controllers/authController.js';
 
 const router = express.Router();
 
 // Public routes
-router.post('/register', AuthController.register);
-router.post('/login', AuthController.login);
-router.post('/refresh-token', AuthController.refreshToken);
-
-// Protected routes (require authentication)
-router.post('/enable-mfa', authMiddleware, AuthController.enableMFA);
-router.post('/verify-mfa', authMiddleware, AuthController.verifyMFA);
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+router.post('/mfa-verify', verifyMFA);
+router.post('/refresh-token', refreshToken);
 
 export default router;

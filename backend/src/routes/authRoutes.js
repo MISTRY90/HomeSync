@@ -1,12 +1,12 @@
 import express from 'express';
-import { registerUser, loginUser, verifyMFA, refreshToken } from '../controllers/authController.js';
+import { register, login, refresh, logout } from '../controllers/authController.js';
+import { checkRefreshToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Public routes
-router.post('/register', registerUser);
-router.post('/login', loginUser);
-router.post('/mfa-verify', verifyMFA);
-router.post('/refresh-token', refreshToken);
+router.post('/register', register);
+router.post('/login', login);
+router.post('/refresh', checkRefreshToken, refresh);
+router.post('/logout', checkRefreshToken, logout);
 
 export default router;

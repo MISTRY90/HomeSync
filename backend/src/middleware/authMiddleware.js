@@ -1,32 +1,33 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/UserModel.js';
+import { verifyToken } from '../utils/jwt.js';
 
-export const authenticateJWT = (requiredRoles = [], requiredPermissions = []) => {
-  return async (req, res, next) => {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+const authenticate = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
     
-    if (!token) return res.status(401).send('Access denied');
+    if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.getUserWithPermissions(decoded.user_id);
+    const decoded = verifyToken(token, process.env.JWT_SECRET);
+    if (!decoded) return res.status(401).json({ error: 'Invalid token' });
 
-      if (!user) return res.status(401).send('Invalid user');
-      
-      req.user = user;
-      
-      if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
-        return res.status(403).send('Insufficient privileges');
-      }
-
-      const permissions = JSON.parse(user.permissions);
-      if (requiredPermissions.some(perm => !permissions[perm])) {
-        return res.status(403).send('Missing required permissions');
-      }
-
-      next();
-    } catch (err) {
-      res.status(401).send('Invalid token');
-    }
-  };
+    req.user = { userId: decoded.userId, email: decoded.email };
+    next();
 };
+
+const checkRefreshToken = async (req, res, next) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) return res.status(401).json({ error: 'Unauthorized' });
+
+    const decoded = verifyToken(refreshToken, process.env.JWT_REFRESH_SECRET);
+    if (!decoded) return res.status(401).json({ error: 'Invalid refresh token' });
+
+    const [tokens] = await pool.query(
+        'SELECT * FROM RefreshToken WHERE user_id = ? AND token = ?',
+        [decoded.userId, refreshToken]
+    );
+    
+    if (!tokens.length) return res.status(401).json({ error: 'Token revoked' });
+    req.user = { userId: decoded.userId };
+    next();
+};
+
+export { authenticate, checkRefreshToken };

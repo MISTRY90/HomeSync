@@ -1,127 +1,117 @@
+import pool from '../config/db.js';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-import speakeasy from 'speakeasy';
-import User from '../models/UserModel.js';
-import RefreshToken from '../models/RefreshTokenModel.js';
-import House from '../models/HouseModel.js';
-import Role from '../models/RoleModel.js';
-import UserHouse from '../models/UserHouseModel.js';
+import { createUser } from '../models/UserModel.js';
+// import { sendVerificationEmail } from '../utils/email.js';
+import { generateTokens, storeRefreshToken } from '../utils/jwt.js';
+import { verifyMfaCode } from '../utils/otp.js';
 
-const generateTokens = async (userId) => {
-  const accessToken = jwt.sign(
-    { user_id: userId },
-    process.env.JWT_SECRET,
-    { expiresIn: '15m' }
-  );
 
-  const refreshToken = jwt.sign(
-    { user_id: userId },
-    process.env.JWT_REFRESH_SECRET,
-    { expiresIn: '7d' }
-  );
 
-  await RefreshToken.create(userId, refreshToken);
-  return { accessToken, refreshToken };
-};
-
-export const registerUser = async (req, res) => {
-  try {
+const register = async (req, res) => {
     const { email, password, name } = req.body;
-    
-    const existingUser = await User.findByEmail(email);
-    if (existingUser) return res.status(400).send('Email already exists');
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const userId = await User.create(email, hashedPassword, name);
+    try {
+        // Check if email exists
+        const [existing] = await pool.query(
+            'SELECT * FROM User WHERE email = ?', 
+            [email]
+        );
+        if (existing.length) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
 
-    // Check if this is the first user
-    const houseCount = await House.count();
-    if (houseCount === 0) {
-      // Create initial house with default name
-      const houseId = await House.create(userId, 'My Smart Home', 'UTC');
-      
-      // Create default roles
-      await Role.createDefaultRoles(houseId);
-      
-      // Get Admin role
-      const adminRole = await Role.getByName(houseId, 'Admin');
-      
-      // Assign admin role to user
-      await UserHouse.assign(userId, houseId, adminRole.role_id);
+        // Create basic user
+        const passwordHash = await bcrypt.hash(password, 10);
+        const [result] = await pool.query(
+            `INSERT INTO User 
+            (email, password_hash, name, status) 
+            VALUES (?, ?, ?, 'active')`,
+            [email, passwordHash, name]
+        );
+
+        res.status(201).json({
+            message: 'User registered successfully',
+            userId: result.insertId
+        });
+
+    } catch (error) {
+        console.error('Registration error:', error);
+        res.status(500).json({ error: 'Registration failed' });
     }
+};
 
-    res.status(201).json({ userId });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+
+const verifyEmail = async (req, res) => {
+  const { token } = req.body;
+
+  try {
+      const verified = await verifyUser(token);
+      
+      if (!verified) {
+          return res.status(400).json({ error: 'Invalid or expired verification token' });
+      }
+
+      res.json({ message: 'Email verified successfully' });
+  } catch (error) {
+      console.error('Email verification error:', error);
+      res.status(500).json({ error: 'Email verification failed' });
   }
 };
 
-export const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+const login = async (req, res) => {
+    const { email, password, mfaCode } = req.body;
     
-    const user = await User.findByEmail(email);
-    if (!user) return res.status(401).send('Invalid credentials');
-
-    const validPass = await bcrypt.compare(password, user.password_hash);
-    if (!validPass) return res.status(401).send('Invalid credentials');
-
-    if (user.mfa_secret && user.roles.includes('Admin')) {
-      return res.status(202).json({ 
-        mfaRequired: true,
-        tempToken: jwt.sign({ user_id: user.user_id }, process.env.JWT_SECRET, { expiresIn: '5m' })
-      });
+    // 1. Verify credentials
+    const [users] = await pool.query('SELECT * FROM User WHERE email = ?', [email]);
+    const user = users[0];
+    
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+        return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const tokens = await generateTokens(user.user_id);
-    res.json(tokens);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-};
+    // 2. Check MFA for admins
+    if (user.mfa_secret) {
+        if (!mfaCode) return res.status(401).json({ error: 'MFA required' });
+        if (!verifyMfaCode(user.mfa_secret, mfaCode)) {
+            return res.status(401).json({ error: 'Invalid MFA code' });
+        }
+    }
 
-export const verifyMFA = async (req, res) => {
-  try {
-    const { code, tempToken } = req.body;
-    
-    const decoded = jwt.verify(tempToken, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.user_id);
+    // 3. Generate tokens
+    const { accessToken, refreshToken } = generateTokens(user);
+    await storeRefreshToken(user.user_id, refreshToken);
 
-    const verified = speakeasy.totp.verify({
-      secret: user.mfa_secret,
-      encoding: 'base32',
-      token: code,
-      window: 1
+    res.cookie('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
-    if (!verified) return res.status(401).send('Invalid code');
-
-    const tokens = await generateTokens(user.user_id);
-    res.json(tokens);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+    res.json({ accessToken });
 };
 
-export const refreshToken = async (req, res) => {
-  const { refreshToken } = req.body;
-  
-  if (!refreshToken) return res.status(401).send('Refresh token required');
+const refresh = async (req, res) => {
+    const { userId } = req.user;
+    const [users] = await pool.query('SELECT * FROM User WHERE user_id = ?', [userId]);
+    const user = users[0];
+    
+    const { accessToken, refreshToken } = generateTokens(user);
+    await storeRefreshToken(user.user_id, refreshToken);
 
-  try {
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-    const validToken = await RefreshToken.findValidToken(decoded.user_id, refreshToken);
-
-    if (!validToken) return res.status(401).send('Invalid refresh token');
-
-    const accessToken = jwt.sign(
-      { user_id: decoded.user_id },
-      process.env.JWT_SECRET,
-      { expiresIn: '15m' }
-    );
+    res.cookie('refreshToken', refreshToken, { 
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    });
 
     res.json({ accessToken });
-  } catch (err) {
-    res.status(401).send('Invalid refresh token');
-  }
 };
+
+const logout = async (req, res) => {
+    const { refreshToken } = req.cookies;
+    await pool.query('DELETE FROM RefreshToken WHERE token = ?', [refreshToken]);
+    res.clearCookie('refreshToken');
+    res.sendStatus(204);
+};
+
+export { login, refresh, logout, verifyEmail ,register };

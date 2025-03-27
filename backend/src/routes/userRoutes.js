@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/authMiddleware.js';
-import { checkHousePermission, isHouseAdmin } from '../middleware/rbacMiddleware.js';
+import { checkPermission, isHouseAdmin } from '../middleware/rbacMiddleware.js';
 import { setupMfa, verifyMfa } from '../controllers/mfaController.js';
 
 const router = express.Router();
@@ -12,7 +12,7 @@ router.post('/mfa/verify', authenticate, verifyMfa);
 // User Management
 router.put('/users/:userId/roles', 
     authenticate, 
-    checkHousePermission(['manage_users']), // Use new permission check
+    checkPermission(['manage_users']), // Use new permission check
     async (req, res) => {
         // Implementation for updating user roles
     }

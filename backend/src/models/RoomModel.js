@@ -9,3 +9,12 @@ export const createRoom = async (houseId, name, size = null, energyConsumptionLi
     );
     return result.insertId;
 };
+
+export const deleteRoom = async (roomId, houseId) => {
+    const [result] = await pool.query(
+      'DELETE FROM Room WHERE room_id = ? AND house_id = ?',
+      [roomId, houseId]
+    );
+    return result.affectedRows;
+  };
+  

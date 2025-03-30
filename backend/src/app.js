@@ -14,6 +14,7 @@ import deviceRoutes from "./routes/deviceRoutes.js";
 import scheduler from "./utils/scheduler.js";
 import automationRoutes from "./routes/automationRoutes.js";
 import energyRoutes from "./routes/energyRoutes.js";
+import securityRoutes from './routes/securityRoutes.js';
 
 // Configure global error handling
 process.on("unhandledRejection", (reason, promise) => {
@@ -59,6 +60,8 @@ const startServer = async () => {
 
     // Add to route configuration (before error handlers)
     app.use("/api", energyRoutes);
+
+    app.use('/api', securityRoutes);
 
     // Initialize scheduler
     await scheduler.initialize();

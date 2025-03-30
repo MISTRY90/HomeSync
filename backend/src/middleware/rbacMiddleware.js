@@ -30,6 +30,11 @@ const PERMISSION_TYPES = {
     VIEW: "energy_view",
     MANAGE: "energy_manage",
   },
+  SECURITY_MANAGEMENT: {
+    LOG: "security_log",
+    VIEW: "security_view",
+    MANAGE: "security_manage"
+  }
 };
 
 // Enhanced permission check middleware

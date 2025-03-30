@@ -4,13 +4,16 @@ import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import mqttManager from "./utils/mqtt.js";
+// import mqttManager from "./utils/mqtt.js";
 import winston from "winston";
 import authRoutes from "./routes/authRoutes.js";
 import usersRouter from "./routes/userRoutes.js";
 import houseRouter from "./routes/houseRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
-import deviceRoutes from "./routes/deviceRoutes.js"
+import deviceRoutes from "./routes/deviceRoutes.js";
+import scheduler from "./utils/scheduler.js";
+import automationRoutes from "./routes/automationRoutes.js";
+import energyRoutes from "./routes/energyRoutes.js";
 
 // Configure global error handling
 process.on("unhandledRejection", (reason, promise) => {
@@ -20,7 +23,7 @@ process.on("unhandledRejection", (reason, promise) => {
 process.on("uncaughtException", (error) => {
   winston.error("Uncaught Exception:", error);
   // Gracefully shut down
-  mqttManager.disconnect();
+  // mqttManager.disconnect();
   process.exit(1);
 });
 
@@ -51,6 +54,15 @@ const startServer = async () => {
     //device Routes
     app.use("/api/devices", deviceRoutes);
 
+    // Add automation routes
+    app.use("/api", automationRoutes);
+
+    // Add to route configuration (before error handlers)
+    app.use("/api", energyRoutes);
+
+    // Initialize scheduler
+    await scheduler.initialize();
+
     //connect to mqtt Broker
 
     // Health check endpoint
@@ -58,7 +70,7 @@ const startServer = async () => {
       res.status(200).json({ status: "OK" });
     });
 
-    mqttManager.connect();
+    // mqttManager.connect();
 
     // Start server
     const server = app.listen(port, () => {
@@ -71,7 +83,7 @@ const startServer = async () => {
     process.on("SIGTERM", () => {
       console.log("SIGTERM received. Shutting down gracefully");
       server.close(() => {
-        mqttManager.disconnect();
+        // mqttManager.disconnect();
         process.exit(0);
       });
     });

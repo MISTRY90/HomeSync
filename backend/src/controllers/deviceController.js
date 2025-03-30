@@ -6,7 +6,7 @@ import {
     getDeviceTypes,
     deleteDevice
 } from '../models/DeviceModel.js';
-import mqttManager from '../utils/mqtt.js';
+// import mqttManager from '../utils/mqtt.js';
 
 export const registerDeviceController = async (req, res) => {
     const { 
@@ -50,7 +50,7 @@ export const updateDeviceStateController = async (req, res) => {
         
         if (updated) {
             // Use mqttManager.publishMessage instead of publishMqttMessage
-            mqttManager.publishMessage(`devices/${deviceId}/state`, JSON.stringify(newState));
+            // mqttManager.publishMessage(`devices/${deviceId}/state`, JSON.stringify(newState));
             
             res.json({ 
                 message: 'Device state updated successfully',

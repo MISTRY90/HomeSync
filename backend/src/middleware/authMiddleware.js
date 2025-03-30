@@ -1,4 +1,5 @@
 import { verifyToken } from '../utils/jwt.js';
+import pool from '../config/db.js';
 
 const authenticate = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -30,4 +31,31 @@ const checkRefreshToken = async (req, res, next) => {
     next();
 };
 
-export { authenticate, checkRefreshToken };
+const getHouseDetails = async (req, res, next) => {
+    const { houseId } = req.params;
+    
+    try {
+        const [houses] = await pool.query(
+            'SELECT * FROM House WHERE house_id = ?',
+            [houseId]
+        );
+        
+        if (!houses.length) {
+            return res.status(404).json({ error: 'House not found' });
+        }
+
+        req.house = houses[0];
+        
+        // If electricity_rate is not in the database, set a default value
+        if (req.house.electricity_rate === undefined) {
+            req.house.electricity_rate = 0.15; // Default rate
+        }
+        
+        next();
+    } catch (error) {
+        console.error('House details error:', error);
+        res.status(500).json({ error: 'Failed to get house details' });
+    }
+};
+
+export { authenticate, checkRefreshToken, getHouseDetails };

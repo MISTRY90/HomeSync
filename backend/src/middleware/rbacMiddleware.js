@@ -34,6 +34,9 @@ const PERMISSION_TYPES = {
     LOG: "security_log",
     VIEW: "security_view",
     MANAGE: "security_manage"
+  },
+  ACTIVITY_LOGS: {
+    VIEW: "activity_logs_view"
   }
 };
 

@@ -6,6 +6,7 @@ import {
     getDeviceTypes,
     deleteDevice
 } from '../models/DeviceModel.js';
+import { logUserAction } from '../models/AccessLogModel.js';
 // import mqttManager from '../utils/mqtt.js';
 
 export const registerDeviceController = async (req, res) => {
@@ -49,8 +50,12 @@ export const updateDeviceStateController = async (req, res) => {
         const updated = await updateDeviceState(deviceId, newState);
         
         if (updated) {
-            // Use mqttManager.publishMessage instead of publishMqttMessage
-            // mqttManager.publishMessage(`devices/${deviceId}/state`, JSON.stringify(newState));
+            // Log the user action
+            await logUserAction(
+                userId, 
+                deviceId, 
+                `Updated state to ${JSON.stringify(newState)}`
+            );
             
             res.json({ 
                 message: 'Device state updated successfully',

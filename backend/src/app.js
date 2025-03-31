@@ -3,9 +3,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import helmet from "helmet";
-import morgan from "morgan";
-// import mqttManager from "./utils/mqtt.js";
-import winston from "winston";
+import logger from "./utils/logger.js";
 import authRoutes from "./routes/authRoutes.js";
 import usersRouter from "./routes/userRoutes.js";
 import houseRouter from "./routes/houseRoutes.js";
@@ -15,16 +13,17 @@ import scheduler from "./utils/scheduler.js";
 import automationRoutes from "./routes/automationRoutes.js";
 import energyRoutes from "./routes/energyRoutes.js";
 import securityRoutes from './routes/securityRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import accessLogRoutes from './routes/accessLogRoutes.js';
 
 // Configure global error handling
 process.on("unhandledRejection", (reason, promise) => {
-  winston.error("Unhandled Rejection at:", promise, "reason:", reason);
+  logger.error("Unhandled Rejection", { reason, promise });
 });
 
 process.on("uncaughtException", (error) => {
-  winston.error("Uncaught Exception:", error);
+  logger.error("Uncaught Exception", { error });
   // Gracefully shut down
-  // mqttManager.disconnect();
   process.exit(1);
 });
 
@@ -43,12 +42,12 @@ const startServer = async () => {
     app.use(express.urlencoded({ extended: true }));
     app.use(cors());
     app.use(helmet());
-    app.use(morgan("combined"));
+
     // Routes
     app.use("/api/auth", authRoutes);
     app.use("/api", usersRouter);
 
-    //house , room Routes
+    //house, room Routes
     app.use("/api/houses", houseRouter);
     app.use("/api/houses", roomRouter);
 
@@ -63,40 +62,40 @@ const startServer = async () => {
 
     app.use('/api', securityRoutes);
 
-    // Initialize scheduler
-    await scheduler.initialize();
+    app.use('/api/admin', adminRoutes);
 
-    //connect to mqtt Broker
+    app.use("/api", accessLogRoutes);
 
     // Health check endpoint
     app.get("/health", (req, res) => {
-      res.status(200).json({ status: "OK" });
+      res.status(200).json({ 
+        status: "OK",
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+      });
     });
 
-    // mqttManager.connect();
-
+    // Initialize scheduler
+    await scheduler.initialize();
     // Start server
     const server = app.listen(port, () => {
-      console.log(
-        `Server running in ${process.env.NODE_ENV} mode on port ${port}`
-      );
+      logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${port}`);
     });
 
     // Graceful shutdown
     process.on("SIGTERM", () => {
-      console.log("SIGTERM received. Shutting down gracefully");
+      logger.info("SIGTERM received. Shutting down gracefully");
       server.close(() => {
-        // mqttManager.disconnect();
+        logger.info("Process terminated");
         process.exit(0);
       });
     });
 
     return server;
   } catch (error) {
-    console.error("Server startup failed:", error);
+    logger.error("Server startup failed", { error });
     process.exit(1);
   }
 };
 
-// Start the server
 startServer();

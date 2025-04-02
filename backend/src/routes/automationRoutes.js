@@ -10,6 +10,7 @@ import { checkPermission, PermissionTypes } from '../middleware/rbacMiddleware.j
 
 const router = express.Router();
 
+// Create automation rules for a house
 router.post('/houses/:houseId/automations',
   authenticate,
   checkPermission([PermissionTypes.AUTOMATION_MANAGEMENT.CREATE]),

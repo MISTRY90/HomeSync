@@ -9,9 +9,10 @@ import { checkPermission, PermissionTypes } from '../middleware/rbacMiddleware.j
 
 const router = express.Router();
 
+// Get house access logs (requires security view permission)
 router.get('/houses/:houseId/logs',
   authenticate,
-  checkPermission([PermissionTypes.SECURITY_MANAGEMENT.VIEW]), // Or use a dedicated logs permission
+  checkPermission([PermissionTypes.SECURITY_MANAGEMENT.VIEW]),
   getHouseLogsController
 );
 

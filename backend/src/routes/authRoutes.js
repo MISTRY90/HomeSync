@@ -6,11 +6,13 @@ import { registerSchema, loginSchema } from '../validations/authValidation.js';
 
 const router = express.Router();
 
+// User registration with validation
 router.post('/register', 
   validateRequest(registerSchema),
   register
 );
 
+// User login with credentials validation
 router.post('/login',
   validateRequest(loginSchema),
   login

@@ -5,8 +5,12 @@ import { isHouseAdmin } from '../middleware/isAdmin.js';
 
 const router = express.Router();
 
-// POST: Create a room (admin only)
-router.post('/:houseId/rooms', authenticate, isHouseAdmin, createRoomController);
+// Create new room in a house (admin only)
+router.post('/:houseId/rooms', 
+  authenticate, 
+  isHouseAdmin, 
+  createRoomController
+);
 
 // DELETE: Delete a room (admin only)
 router.delete('/:houseId/rooms/:roomId', authenticate, isHouseAdmin, deleteRoomController);

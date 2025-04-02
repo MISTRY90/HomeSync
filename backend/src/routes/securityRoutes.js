@@ -9,6 +9,7 @@ import { checkPermission, PermissionTypes } from '../middleware/rbacMiddleware.j
 
 const router = express.Router();
 
+// Log security events for a house (requires security logging permission)
 router.post(
   '/houses/:houseId/security-events',
   authenticate,

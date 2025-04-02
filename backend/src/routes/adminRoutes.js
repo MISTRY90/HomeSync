@@ -23,4 +23,13 @@ router.get('/houses/:houseId/dashboard', isHouseAdmin, getDashboardController);
 router.get('/houses/:houseId/activity-logs', isHouseAdmin, getActivityLogsController);
 router.get('/houses/:houseId/activity-logs/export', isHouseAdmin, exportActivityLogsController);
 
+// Invite users to house (admin only)
+router.post('/invite', isHouseAdmin, inviteUserController);
+
+// Create custom roles (admin only)
+router.post('/roles', isHouseAdmin, createRoleController);
+
+// Get admin dashboard data
+router.get('/dashboard', isHouseAdmin, getDashboardController);
+
 export default router;

@@ -5,7 +5,7 @@ import { isHouseAdmin } from '../middleware/rbacMiddleware.js';
 
 const router = express.Router();
 
-// Create new house
+// Create new smart home
 router.post('/', authenticate, createHouseController);
 
 

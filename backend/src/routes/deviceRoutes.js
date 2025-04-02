@@ -12,7 +12,7 @@ import { checkPermission, PermissionTypes } from '../middleware/rbacMiddleware.j
 
 const router = express.Router();
 
-// Get device types (no houseId needed)
+// Get supported device types
 router.get('/types', authenticate, listDeviceTypesController);
 
 // List devices in a house (houseId in URL param)
@@ -22,7 +22,7 @@ router.get('/:houseId',
     listDevicesController
 );
 
-// Register a new device (houseId in body)
+// Register new device in a house
 router.post('/houses/:houseId/register', 
     authenticate, 
     checkPermission([PermissionTypes.DEVICE_MANAGEMENT.CREATE]), 

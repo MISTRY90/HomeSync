@@ -1,7 +1,7 @@
 import { Provider } from 'react-redux'
 import { BrowserRouter } from 'react-router-dom'
 import ThemeProvider from './ThemeProvider'
-// import AppRoutes from './Routes'
+import AppRoutes from './Routes'
 import { store } from './store/store'
 
 function App() {
@@ -9,7 +9,7 @@ function App() {
     <Provider store={store}>
       <BrowserRouter>
         <ThemeProvider>
-          hello
+          <AppRoutes />
         </ThemeProvider>
       </BrowserRouter>
     </Provider>

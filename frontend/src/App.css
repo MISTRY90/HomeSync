@@ -1,0 +1,6 @@
+/* src/components/Navbar.css */
+@media (max-width: 600px) {
+    .MuiDrawer-paper {
+      width: 200px; /* Adjust width for smaller screens */
+    }
+  }

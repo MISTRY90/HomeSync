@@ -1,19 +1,14 @@
-import { Provider } from 'react-redux'
-import { BrowserRouter } from 'react-router-dom'
-import ThemeProvider from './ThemeProvider'
-import AppRoutes from './Routes'
-import { store } from './store/store'
+// src/App.jsx
+import { BrowserRouter as Router } from 'react-router-dom';
+import Layout from '@components/Layout';
+import Routes from '@routes/Routes';
 
-function App() {
+export default function App() {
   return (
-    <Provider store={store}>
-      <BrowserRouter>
-        <ThemeProvider>
-          <AppRoutes />
-        </ThemeProvider>
-      </BrowserRouter>
-    </Provider>
-  )
+    <Router>
+      <Layout>
+        <Routes />
+      </Layout>
+    </Router>
+  );
 }
-
-export default App

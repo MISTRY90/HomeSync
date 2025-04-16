@@ -1,12 +1,11 @@
-import React from 'react'
+// src/pages/DevicesPage.jsx
+import { Typography } from '@mui/material';
 
-const Devices = () => {
+export default function DevicesPage() {
   return (
     <div>
-      Devices
-      
+      <Typography variant="h4">Device Management</Typography>
+      {/* Add devices content */}
     </div>
-  )
+  );
 }
-
-export default Devices

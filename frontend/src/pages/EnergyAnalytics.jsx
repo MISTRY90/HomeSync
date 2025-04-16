@@ -1,11 +1,11 @@
-import React from 'react'
+// src/pages/AnalyticsPage.jsx
+import { Typography } from '@mui/material';
 
-const EnergyAnalytics = () => {
+export default function AnalyticsPage() {
   return (
     <div>
-      Energy Analystic
+      <Typography variant="h4">Energy Analytics</Typography>
+      {/* Add analytics content */}
     </div>
-  )
+  );
 }
-
-export default EnergyAnalytics

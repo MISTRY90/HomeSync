@@ -25,6 +25,18 @@ export const fetchDeviceEnergy = createAsyncThunk(
   }
 );
 
+export const fetchHouseEnergy = createAsyncThunk(
+  'analytics/fetchHouseEnergy',
+  async ({ houseId, period }, { rejectWithValue }) => {
+    try {
+      const { data } = await energyService.getHouseEnergy(houseId, period);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response.data);
+    }
+  }
+);
+
 const analyticsSlice = createSlice({
   name: 'analytics',
   initialState: {
@@ -63,6 +75,17 @@ const analyticsSlice = createSlice({
         state.energyUsage.daily = action.payload;
       })
       .addCase(fetchDeviceEnergy.rejected, (state, action) => {
+        state.status = 'idle';
+        state.error = action.payload;
+      })
+      .addCase(fetchHouseEnergy.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(fetchHouseEnergy.fulfilled, (state, action) => {
+        state.status = 'idle';
+        state.energyUsage = action.payload;
+      })
+      .addCase(fetchHouseEnergy.rejected, (state, action) => {
         state.status = 'idle';
         state.error = action.payload;
       });

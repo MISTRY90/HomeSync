@@ -1,4 +1,4 @@
-import { createHouse, deleteHouse} from '../models/HouseModel.js';
+import { createHouse, deleteHouse, getHouseByAdmin, getHousesByUserId } from '../models/HouseModel.js';
 import pool from '../config/db.js';
 
 export const createHouseController = async (req, res) => {
@@ -33,3 +33,16 @@ export const deleteHouseController = async (req, res) => {
       res.status(500).json({ error: 'Failed to delete house' });
     }
   };
+
+export const getHousesByUserController = async (req, res) => {
+    const userId = req.user.userId;
+
+    try {
+        const houses = await getHousesByUserId(userId);
+        res.json({ houses });
+    } catch (error) {
+        console.error('Error fetching houses:', error);
+        res.status(500).json({ error: 'Failed to fetch houses' });
+    }
+};
+

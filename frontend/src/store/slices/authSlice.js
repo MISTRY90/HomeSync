@@ -112,6 +112,7 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.accessToken = action.payload.accessToken;
+        state.user = action.payload.userId;
         state.isAuthenticated = true;
         localStorage.setItem('accessToken', action.payload.accessToken); // Simple persistence
       })

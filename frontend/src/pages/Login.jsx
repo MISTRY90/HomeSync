@@ -53,7 +53,7 @@ const LoginPage = () => {
     dispatch(loginUser(formData))
       .unwrap()
       .then(() => {
-        navigate("/setup-house");
+        navigate("/dashboard");
       });
   };
 

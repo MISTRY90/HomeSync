@@ -71,3 +71,13 @@ export const getHouseByIdAndAdmin = async (userId, houseId) => {
     );
     return houses[0];
 };
+
+    export const getHousesByUserId = async (userId) => {
+        const [houses] = await pool.query(
+            `SELECT h.* FROM House h
+            JOIN UserHouse uh ON h.house_id = uh.house_id
+            WHERE uh.user_id = ?`,
+            [userId]
+        );
+        return houses;
+    };

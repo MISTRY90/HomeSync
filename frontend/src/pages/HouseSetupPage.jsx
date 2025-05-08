@@ -29,17 +29,12 @@ const HouseSetupPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error, houses } = useSelector((state) => state.houses);
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated , user:userId } = useSelector((state) => state.auth);
   const [houseName, setHouseName] = useState("");
   const [description, setDescription] = useState("");
   const [timezone, setTimezone] = useState("");
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      dispatch(fetchHouses());
-    }
-  }, [dispatch, isAuthenticated]);
-
+  
   useEffect(() => {
     if (!loading && houses.length > 0) {
       navigate('/dashboard');

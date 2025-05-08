@@ -4,10 +4,10 @@ import { houseService } from '../../services/houseService';
 // Async Thunks
 export const fetchHouses = createAsyncThunk(
   'houses/fetchAll',
-  async (_, { rejectWithValue }) => {
+  async (userId, { rejectWithValue }) => {
     try {
-      const response = await houseService.getHouses();
-      return response.data;
+      const response = await houseService.getHouses(userId);
+      return response.data.houses;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -19,7 +19,12 @@ export const createHouse = createAsyncThunk(
   async (houseData, { rejectWithValue }) => {
     try {
       const response = await houseService.createHouse(houseData);
-      return response.data;
+      return {
+        id: response.data.houseId,
+        adminUserId: response.data.adminUserId,
+        name: houseData.name, // or other properties you sent in the request
+        ...houseData
+      };
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
